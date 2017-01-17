@@ -40,9 +40,11 @@ import java.util.List;
  * NIO selector based implementation to accept new connections.
  */
 public class NioServerSocketChannel extends AbstractNioMessageChannel
-                             implements io.netty.channel.socket.ServerSocketChannel {
+        implements io.netty.channel.socket.ServerSocketChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+
+    // 注意java的nio api里面很多实例化对象都是通过SelectorProvider.provider()拿到的
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
@@ -54,6 +56,11 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
              *  {@link SelectorProvider#provider()} which is called by each ServerSocketChannel.open() otherwise.
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
+             *
+             *  通过 provider来打开一个SocketChannel，
+             *  通过这种方式能够避开直接调用SelectorProvider.provider().openServerSocketChannel()来生成SocketChannel
+             *  实际上java API的源码就是通过ServerSocketChannel.open()生成的SocketChannel
+             *
              */
             return provider.openServerSocketChannel();
         } catch (IOException e) {
@@ -66,6 +73,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     /**
      * Create a new instance
+     * 默认构造方法，初始化一个默认的ServerSocketChannel, 该ServerSocketChannel通过默认的SelectorProvider
      */
     public NioServerSocketChannel() {
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
@@ -83,6 +91,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
+        // 初始化ServerSocketChannelConfig
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
@@ -189,7 +198,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         throw new UnsupportedOperationException();
     }
 
-    private final class NioServerSocketChannelConfig  extends DefaultServerSocketChannelConfig {
+    private final class NioServerSocketChannelConfig extends DefaultServerSocketChannelConfig {
         private NioServerSocketChannelConfig(NioServerSocketChannel channel, ServerSocket javaSocket) {
             super(channel, javaSocket);
         }

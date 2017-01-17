@@ -18,12 +18,14 @@ package io.netty.channel;
 import io.netty.util.IntSupplier;
 
 /**
+ * 单例模式
  * Default select strategy.
  */
 final class DefaultSelectStrategy implements SelectStrategy {
     static final SelectStrategy INSTANCE = new DefaultSelectStrategy();
 
-    private DefaultSelectStrategy() { }
+    private DefaultSelectStrategy() {
+    }
 
     @Override
     public int calculateStrategy(IntSupplier selectSupplier, boolean hasTasks) throws Exception {
