@@ -92,6 +92,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
         // 初始化ServerSocketChannelConfig,从这个地方可以看到NioServerSocketChannel和NioServerSocketChannelConfig之间进行了互相引用
+        // 在netty中，对象之间互相引用普遍存在
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 

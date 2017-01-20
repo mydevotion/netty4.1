@@ -76,15 +76,16 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     /**
      * Create a new instance
      *
-     * @param parent            the parent {@link Channel} by which this instance was created. May be {@code null}
-     * @param ch                the underlying {@link SelectableChannel} on which it operates
-     * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
+     * @param parent         the parent {@link Channel} by which this instance was created. May be {@code null}
+     * @param ch             the underlying {@link SelectableChannel} on which it operates
+     * @param readInterestOp the ops to set to receive data from the {@link SelectableChannel}
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
+            // 非阻塞的
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -129,7 +130,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     /**
      * @deprecated No longer supported.
-     * No longer supported.
+     *             No longer supported.
      */
     @Deprecated
     protected boolean isReadPending() {
@@ -138,7 +139,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     /**
      * @deprecated Use {@link #clearReadPending()} if appropriate instead.
-     * No longer supported.
+     *             No longer supported.
      */
     @Deprecated
     protected void setReadPending(final boolean readPending) {
@@ -382,7 +383,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     @Override
     protected void doRegister() throws Exception {
         boolean selected = false;
-        for (;;) {
+        for (; ; ) {
             try {
                 selectionKey = javaChannel().register(eventLoop().selector, 0, this);
                 return;
