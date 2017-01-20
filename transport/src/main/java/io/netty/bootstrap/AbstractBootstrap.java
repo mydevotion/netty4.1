@@ -280,12 +280,14 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     private ChannelFuture doBind(final SocketAddress localAddress) {
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
+        //如果有异常就直接返回
         if (regFuture.cause() != null) {
             return regFuture;
         }
 
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
+            // 如果任务成功结束,在Channel上重新生成ChannelPromise
             ChannelPromise promise = channel.newPromise();
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
@@ -357,6 +359,14 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
     abstract void init(Channel channel) throws Exception;
 
+    /**
+     * 绑定端口
+     *
+     * @param regFuture    上一个成功的ChannelFuture
+     * @param channel      绑定在ChannelFuture上的Channel
+     * @param localAddress 绑定地址
+     * @param promise      重新绑定的ChannelFuture
+     */
     private static void doBind0(
             final ChannelFuture regFuture, final Channel channel,
             final SocketAddress localAddress, final ChannelPromise promise) {

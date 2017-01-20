@@ -89,6 +89,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise = new VoidChannelPromise(channel, true);
 
+        // 下面TailContext和DefaultChannelPipeline都进行了互相引用
         tail = new TailContext(this);
         head = new HeadContext(this);
 
@@ -108,6 +109,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private AbstractChannelHandlerContext newContext(EventExecutorGroup group, String name, ChannelHandler handler) {
+        // 把自身传给HandlerContext，而自身持有NioServerSocketChannel的实例
         return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler);
     }
 
@@ -151,6 +153,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             checkMultiplicity(handler);
             name = filterName(name, handler);
 
+            /**
+             * 把每一个ChannelHandler都封装成一个ChannelHandlerContext，
+             * ChannelHandlerContext实际上是一个双向链表，有
+             * volatile AbstractChannelHandlerContext next;
+             * volatile AbstractChannelHandlerContext prev;
+             * 分别指向下一个ChannelHandlerContext和上一个ChannelHandlerContext
+             */
             newCtx = newContext(group, name, handler);
 
             addFirst0(newCtx);
@@ -180,7 +189,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * 将传入的HandlerContext newCtx放入到head的下一个节点
+     *
+     * @param newCtx
+     */
     private void addFirst0(AbstractChannelHandlerContext newCtx) {
+        // 注意它们之间的顺序
         AbstractChannelHandlerContext nextCtx = head.next;
         newCtx.prev = head;
         newCtx.next = nextCtx;
@@ -198,11 +213,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
             checkMultiplicity(handler);
-
             newCtx = newContext(group, filterName(name, handler), handler);
-
             addLast0(newCtx);
-
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
@@ -287,6 +299,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         ctx.prev = newCtx;
     }
 
+    /**
+     * 生成handler的名字，如果给定的name为null,则调用{@link #generateName(ChannelHandler)}获取名字
+     *
+     * @param name
+     * @param handler
+     * @return
+     */
     private String filterName(String name, ChannelHandler handler) {
         if (name == null) {
             return generateName(handler);
@@ -396,6 +415,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * 会根据handler的类名(不带包名)和#+数字组成，数字会轮询从0开始递增
+     *
+     * @param handler
+     * @return
+     */
     private String generateName(ChannelHandler handler) {
         Map<Class<?>, String> cache = nameCaches.get();
         Class<?> handlerType = handler.getClass();

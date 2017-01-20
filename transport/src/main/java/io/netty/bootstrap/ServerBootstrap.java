@@ -49,6 +49,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     private volatile EventLoopGroup childGroup;
     private volatile ChannelHandler childHandler;
 
+    ServerBootstrap(AbstractBootstrap<ServerBootstrap, ServerChannel> bootstrap) {
+        super(bootstrap);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
     public ServerBootstrap() {
     }
 
